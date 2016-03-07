@@ -1,0 +1,7 @@
+*.zip
+*.csv
+*.jpg
+*.log
+*.pyc
+.DS_Store
+.idea
