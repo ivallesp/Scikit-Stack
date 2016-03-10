@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 __author__ = 'ivanvallesperez'
-import warnings
 
 import numpy as np
 from sklearn.cross_validation import StratifiedKFold, KFold
@@ -11,7 +10,7 @@ class CrossPartitioner():
         """
         Function for creating the partitions for the Stacker by using CrossValidation.
         :param n: When stratify=False, n defines the length of the datasets (int of None, default None)
-        :param y: When stratify=True, y is the class used to preserve the percentages (array-like or None, default=None)
+        :param y: When stratify=True, train_y is the class used to preserve the percentages (array-like or None, default=None)
         :param k: Number of folds (int, default=10).
         :param stratify: Whether to preserve the percentage of samples of each class (boolean, default=False).
         :param shuffle: Whether to shuffle the data before splitting into batches (boolean, default=True).
@@ -24,22 +23,24 @@ class CrossPartitioner():
         self.stratify = stratify
         self.shuffle = shuffle
         self.seed = random_state
-
+        self.N = None
         if self.stratify:
-            assert y != None, "You must pass the  'y' parameter if you want to stratify."
-            if n: assert len(y) == n, "The length of the parameter 'y' and the 'n' value don't mismatch. If you are " \
-                                      "stratifying, it is not necessary to specify n."
+            assert type(y) != None, "You must pass the  'train_y' parameter if you want to stratify."
+            if n: assert len(
+                y) == n, "The length of the parameter 'train_y' and the 'n' value don't mismatch. If you are " \
+                         "stratifying, it is not necessary to specify n."
             self.cvIterator = StratifiedKFold(y = self.y,
                                               n_folds = self.k,
                                               shuffle = self.shuffle,
                                               random_state = self.seed)
+            self.N = len(self.y)
         else:
-            if y: warnings.warn("Caution, you specified y but you are not stratifying! Is it right?")
             assert n != None, "You must specify the size of the data using the 'n' parameter if you don't stratify."
             self.cvIterator = KFold(n=n,
                                     n_folds = self.k,
                                     shuffle = self.shuffle,
                                     random_state = self.seed)
+            self.N = n
 
 
     def make_partitions(self, append_indices = True, dict_format=False, **kwargs):
@@ -59,16 +60,29 @@ class CrossPartitioner():
         if dict_format=False, the format of the generator objects yielded are:
         [(train_d1, test_d1), (train_d2, test_d2), ...]
         """
+        from scipy.sparse.csr import csr_matrix
+        import pandas as pd
         for k, (train_index, test_index) in enumerate(self.cvIterator):
             partitioned_data = {} if dict_format else []
 
             for name, data in kwargs.items():
-                if type(data)==list: data=np.array(data) # Converts lists to Numpy Array
+                if type(data) == list:
+                    data = np.array(data)  # Converts lists to Numpy Array
+                elif type(data) == pd.core.frame.DataFrame:
+                    data = np.array(data)
+
 
                 if append_indices:
-                    split = (data[train_index], data[test_index], train_index, test_index) # Appends the indices
+                    if type(data) == csr_matrix:
+                        split = (data[train_index], data[test_index], train_index, test_index)  # Appends the indices
+                    else:
+                        split = (
+                            data[[train_index]], data[[test_index]], train_index, test_index)  # Appends the indices
                 else:
-                    split = (data[train_index], data[test_index]) # Not appends the indices
+                    if type(data) == csr_matrix:
+                        split = (data[train_index], data[test_index])  # Not appends the indices
+                    else:
+                        split = (data[[train_index]], data[[test_index]])  # Not appends the indices
 
                 if dict_format:
                     partitioned_data[name] = split # Returns a dictionary
