@@ -10,7 +10,8 @@ class CrossPartitioner():
         """
         Function for creating the partitions for the Stacker by using CrossValidation.
         :param n: When stratify=False, n defines the length of the datasets (int of None, default None)
-        :param y: When stratify=True, train_y is the class used to preserve the percentages (array-like or None, default=None)
+        :param y: When stratify=True, train_y is the class used to preserve the percentages (array-like or None,
+        default=None)
         :param k: Number of folds (int, default=10).
         :param stratify: Whether to preserve the percentage of samples of each class (boolean, default=False).
         :param shuffle: Whether to shuffle the data before splitting into batches (boolean, default=True).

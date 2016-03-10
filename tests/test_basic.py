@@ -11,22 +11,39 @@ from demo.data import DIC_FOLD_PARTITIONS, DIC_SFOLD_PARTITIONS
 class TestBasic(unittest.TestCase):
     def test_basic(self):
         from sklearn.ensemble import RandomForestClassifier
-        model = RandomForestClassifier(n_estimators=100)
-        data = make_hastie_10_2(1000, random_state=655321)
-        X, y = data[0], data[1]
+        from sklearn.metrics import roc_auc_score
+        model = RandomForestClassifier(n_estimators=100, random_state=655321)
+        data = make_hastie_10_2(2000)
+        index_randperm = np.random.permutation(range(2000))
+        data = [data[0][index_randperm, :], data[1][index_randperm]]
+        out_of_sample = [data[0][1000:2000, :], data[1][1000:2000]]
+        data = [data[0][0:1000, :], data[1][0:1000]]
 
+        test_X, test_y = out_of_sample[0], out_of_sample[1]
+        X, y = data[0], data[1]
+        id = np.random.permutation(range(len(y)))  # We random permutate it to make the problem harder.
+        # I am very worried to mess the indices...
+        test_id = np.random.permutation(range(len(test_y)))
         self.assertEqual(len(X), len(y),
                          "Error loading hastie data with sklearn. Train/test data with different sizes.")
-        id = range(len(y))
 
-        s = Stacker(train_X=X, train_y=y, train_id=id, model=model, stratify=True)
+
+        s = Stacker(train_X=X, train_y=y, train_id=id, model=model, stratify=False)
         y_hat_training = s.generate_training_metapredictor()
         self.assertIn("cv_score_mean", dir(s), "Atribute 'cv_score_mean' not found in the Stacker object")
         self.assertIn("cv_score_std", dir(s), "Atribute 'cv_score_std' not found in the Stacker object")
         self.assertAlmostEqual(s.cv_score_mean, 0.9, delta=0.05, msg="Score value given by the model ('%s' ± '%s') "
-                                                                     "is weird.") % (s.cv_score_mean, s.cv_score_std)
-        self.assertEqual(y_hat_training.shape.tolist(), y.shape.tolist(),
-                         "Training metapredictor generated with wrong shape")
+                                                                     "is weird." % (s.cv_score_mean, s.cv_score_std))
+        self.assertAlmostEqual(roc_auc_score(y, y_hat_training), s.cv_score_mean, places=2)
+        # Differences produced basically because the size of the sample when calculating the AUC gives the resolution of
+        # the curve. As the resolution changes, the result also slightly changes. We are calculating the roc with
+        # different sample sizes.
+
+        y_hat_test = s.generate_test_metapredictor(test_X, test_id)
+        test_score = roc_auc_score(test_y, y_hat_test)
+        # Test score greater than test_cv score because first of all I am not making any fit, so the cv out of sample
+        #  set is completely out of sample, and for the test set I am using all the training data, what produces a
+        # harder training
 
 
     def test_seed_matching(self):
