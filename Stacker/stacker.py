@@ -3,13 +3,14 @@ import os
 
 import numpy as np
 import pandas as pd
-from sklearn.metrics import roc_auc_score
+from sklearn.metrics import *
 
+from Stacker.common_objects import *
 from Stacker.data_operations import CrossPartitioner
 
 
 class Stacker():
-    def __init__(self, train_X, train_y, train_id, folds=10, stratify=True):
+    def __init__(self, train_X, train_y, train_id, folds=10, stratify=True, metric="auc"):
         """
         This class is the main class of the Stacker. Its main purpose is to properly generate the stacked prediction
         assuring that the indices of the predictions are aligned.
@@ -27,6 +28,7 @@ class Stacker():
         self.model = None
         self.folds = folds
         self.stratify = stratify
+        self.metric = metric
 
     def generate_training_metapredictor(self, model):
         """
@@ -41,6 +43,14 @@ class Stacker():
         self.test_predictor = None
         self.model = None
         self.model = model
+
+        if self.metric.lower() == "auc":
+            eval_metric = roc_auc_score
+        elif self.metric.lower() == "logloss":
+            eval_metric = log_loss
+        else:
+            raise ParameterFail("Got a unrecognized metric name: %s" % self.metric)
+
         cp = CrossPartitioner(n=len(self.train_y) if not self.stratify else None,
                               y=self.train_y,
                               k=self.folds,
@@ -58,7 +68,7 @@ class Stacker():
             test_prediction_cv = np.reshape(test_prediction_cv, (len(test_y_cv), test_prediction_cv.ndim))  # this code
             # forces having 2D
             test_prediction_cv = test_prediction_cv[:, -1]  # Extract the last column
-            score = roc_auc_score(test_y_cv, test_prediction_cv)
+            score = eval_metric(test_y_cv, test_prediction_cv)
             scores.append(score)
             assert len(test_id_cv) == len(test_prediction_cv)
             prediction_batches.extend(test_prediction_cv)

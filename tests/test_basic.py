@@ -13,7 +13,7 @@ from demo.data import DIC_FOLD_PARTITIONS, DIC_SFOLD_PARTITIONS
 class TestBasic(unittest.TestCase):
     def test_basic(self):
         from sklearn.ensemble import RandomForestClassifier
-        from sklearn.metrics import roc_auc_score
+
         model = RandomForestClassifier(n_estimators=100, random_state=655321)
         data = make_hastie_10_2(2000)
         index_randperm = np.random.permutation(range(2000))
@@ -28,7 +28,7 @@ class TestBasic(unittest.TestCase):
         self.assertEqual(len(X), len(y),
                          "Error loading hastie data with sklearn. Train/test data with different sizes.")
 
-        s = Stacker(train_X=X, train_y=y, train_id=id, stratify=False)
+        s = Stacker(train_X=X, train_y=y, train_id=id, stratify=False, metric="auc")
         y_hat_training = s.generate_training_metapredictor(model=model)
         self.assertIn("cv_score_mean", dir(s), "Atribute 'cv_score_mean' not found in the Stacker object")
         self.assertIn("cv_score_std", dir(s), "Atribute 'cv_score_std' not found in the Stacker object")
@@ -69,7 +69,7 @@ class TestBasic(unittest.TestCase):
         test_id = np.random.permutation(range(len(test_y)))
         self.assertEqual(len(X), len(y),
                          "Error loading hastie data with sklearn. Train/test data with different sizes.")
-        s = Stacker(train_X=X, train_y=y, train_id=id, stratify=False)
+        s = Stacker(train_X=X, train_y=y, train_id=id, stratify=False, metric="auc")
 
         model = RandomForestClassifier(n_estimators=100, random_state=655321)
         y_hat_training = s.generate_training_metapredictor(model=model)
@@ -127,7 +127,7 @@ class TestBasic(unittest.TestCase):
         test_id = np.random.permutation(range(len(test_y)))
         self.assertEqual(len(X), len(y),
                          "Error loading hastie data with sklearn. Train/test data with different sizes.")
-        s = Stacker(train_X=X, train_y=y, train_id=id, stratify=False)
+        s = Stacker(train_X=X, train_y=y, train_id=id, stratify=False, metric="auc")
 
         model = RandomForestClassifier(n_estimators=100, random_state=655321)
         y_hat_training = s.generate_training_metapredictor(model=model)
@@ -148,6 +148,35 @@ class TestBasic(unittest.TestCase):
         self.assertIn("target", dfTest.columns)
         os.remove(pathTraining)
         os.remove(pathTest)
+
+    def test_different_metrics(self):
+        from sklearn.ensemble import RandomForestClassifier
+
+        data = make_hastie_10_2(2000)
+        index_randperm = np.random.permutation(range(2000))
+        data = [data[0][index_randperm, :], data[1][index_randperm]]
+        out_of_sample = [data[0][1000:2000, :], data[1][1000:2000]]
+        data = [data[0][0:1000, :], data[1][0:1000]]
+        test_X, test_y = out_of_sample[0], out_of_sample[1]
+        X, y = data[0], data[1]
+        id = np.random.permutation(range(len(y)))  # We random permutate it to make the problem harder.
+        # I am very worried to mess the indices...
+        test_id = np.random.permutation(range(len(test_y)))
+        self.assertEqual(len(X), len(y),
+                         "Error loading hastie data with sklearn. Train/test data with different sizes.")
+        s = Stacker(train_X=X, train_y=y, train_id=id, stratify=False, metric="auc")
+        model = RandomForestClassifier(n_estimators=100, random_state=655321)
+        y_hat_training = s.generate_training_metapredictor(model=model)
+        self.assertAlmostEqual(roc_auc_score(y, y_hat_training), s.cv_score_mean, places=2)
+        self.assertAlmostEqual(s.cv_score_mean, 0.9, delta=0.05, msg="Score value given by the model ('%s' ± '%s') "
+                                                                     "is weird." % (s.cv_score_mean, s.cv_score_std))
+
+        s = Stacker(train_X=X, train_y=y, train_id=id, stratify=False, metric="logloss")
+        model = RandomForestClassifier(n_estimators=100, random_state=655321)
+        y_hat_training = s.generate_training_metapredictor(model=model)
+        self.assertAlmostEqual(log_loss(y, np.array(y_hat_training)), s.cv_score_mean, places=2)
+        self.assertAlmostEqual(s.cv_score_mean, 0.41, delta=0.05, msg="Score value given by the model ('%s' ± '%s') "
+                                                                      "is weird." % (s.cv_score_mean, s.cv_score_std))
 
 
     def test_seed_matching(self):
