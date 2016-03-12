@@ -34,7 +34,7 @@ class TestBasic(unittest.TestCase):
         self.assertIn("cv_score_std", dir(s), "Atribute 'cv_score_std' not found in the Stacker object")
         self.assertAlmostEqual(s.cv_score_mean, 0.9, delta=0.05, msg="Score value given by the model ('%s' ± '%s') "
                                                                      "is weird." % (s.cv_score_mean, s.cv_score_std))
-        self.assertAlmostEqual(roc_auc_score(y, y_hat_training), s.cv_score_mean, places=2)
+        self.assertAlmostEqual(roc_auc_score(y, y_hat_training), s.cv_score_mean, delta=0.05)
         # Differences produced basically because the size of the sample when calculating the AUC gives the resolution of
         # the curve. As the resolution changes, the result also slightly changes. We are calculating the roc with
         # different sample sizes.
@@ -133,9 +133,18 @@ class TestBasic(unittest.TestCase):
         y_hat_training = s.generate_training_metapredictor(model=model)
         y_hat_test = s.generate_test_metapredictor(test_X, test_id)
 
-        s.save_files(alias="demo_predictor", folder="../demo")
         pathTraining = "../demo/demo_predictor_training_metapredictor.csv"
         pathTest = "../demo/demo_predictor_test_metapredictor.csv"
+        pathIndex = "../demo/index.jl"
+        if os.path.exists(pathTraining): os.remove(pathTraining)
+        if os.path.exists(pathTest): os.remove(pathTest)
+        if os.path.exists(pathIndex): os.remove(pathIndex)
+
+        s.save_files(alias="demo_predictor", folder="../demo", metadata={"name": "NeuralNetwork (Tensorflow)",
+                                                                         "description": "7 hidden layers, ReLU",
+                                                                         "additional": "foo"})
+
+        # Test train and test files
         self.assertTrue(os.path.exists(pathTraining))
         self.assertTrue(os.path.exists(pathTest))
         dfTrain = pd.read_csv(pathTraining, sep=",", encoding="utf-8", index_col="id")
@@ -146,8 +155,71 @@ class TestBasic(unittest.TestCase):
         self.assertEqual(dfTest.index.tolist(), test_id.tolist())
         self.assertIn("target", dfTrain.columns)
         self.assertIn("target", dfTest.columns)
+
+        # Test index file
+        self.assertTrue(os.path.exists(pathIndex))
+        indices = codecs.open(pathIndex, 'rb', encoding="utf-8").readlines()
+        self.assertTrue(len(indices) == 1)
+        index_for_test = json.loads(indices[-1])
+        self.assertIn("name", index_for_test)
+        self.assertIn("description", index_for_test)
+        self.assertIn("cv", index_for_test)
+        self.assertIn("score_mean", index_for_test["cv"])
+        self.assertIn("score_std", index_for_test["cv"])
+        self.assertIn("score_metric", index_for_test["cv"])
+        self.assertIn("folds", index_for_test["cv"])
+        self.assertIn("stratify", index_for_test["cv"])
+        self.assertIn("shuffle", index_for_test["cv"])
+        self.assertIn("time", index_for_test["cv"])
+        self.assertIn("alias", index_for_test)
+        self.assertIn("test_filePath", index_for_test)
+        self.assertIn("train_filePath", index_for_test)
+        self.assertIn("datetime", index_for_test)
+        self.assertIn("whole_model_time", index_for_test)
+        self.assertIn("total_time", index_for_test)
+        self.assertIn("additional", index_for_test)
+        self.assertIn(type(index_for_test["name"]), [str, unicode])
+        self.assertIn(type(index_for_test["description"]), [str, unicode])
+        self.assertEqual(type(index_for_test["cv"]), dict)
+        self.assertEqual(type(index_for_test["cv"]["score_mean"]), float)
+        self.assertEqual(type(index_for_test["cv"]["score_std"]), float)
+        self.assertIn(type(index_for_test["cv"]["score_metric"]), [str, unicode])
+        self.assertEqual(type(index_for_test["cv"]["folds"]), int)
+        self.assertEqual(type(index_for_test["cv"]["stratify"]), bool)
+        self.assertEqual(type(index_for_test["cv"]["shuffle"]), bool)
+        self.assertEqual(type(index_for_test["cv"]["time"]), float)
+        self.assertIn(type(index_for_test["alias"]), [str, unicode])
+        self.assertIn(type(index_for_test["test_filePath"]), [str, unicode])
+        self.assertIn(type(index_for_test["train_filePath"]), [str, unicode])
+        self.assertIn(type(index_for_test["datetime"]), [str, unicode])
+        self.assertEqual(type(index_for_test["whole_model_time"]), float)
+        self.assertEqual(type(index_for_test["total_time"]), float)
+        self.assertIn(type(index_for_test["additional"]), [str, unicode])
+
+        pathTraining_copy = "../demo/demo_predictor_training_metapredictor_copy1.csv"
+        pathTest_copy = "../demo/demo_predictor_test_metapredictor_copy1.csv"
+
+        if os.path.exists(pathTraining_copy): os.remove(pathTraining_copy)
+        if os.path.exists(pathTest_copy): os.remove(pathTest_copy)
+
+        self.assertFalse(os.path.exists(pathTraining_copy))
+        self.assertFalse(os.path.exists(pathTest_copy))
+
+        s.save_files(alias="demo_predictor", folder="../demo", metadata={"name": "NeuralNetwork (Tensorflow)",
+                                                                         "description": "7 hidden layers, ReLU",
+                                                                         "additional": "foo"})
+        self.assertTrue(os.path.exists(pathTraining_copy))
+        self.assertTrue(os.path.exists(pathTest_copy))
+
+        indices = codecs.open(pathIndex, 'rb', encoding="utf-8").readlines()
+        self.assertTrue(len(indices) == 2)
+
         os.remove(pathTraining)
         os.remove(pathTest)
+        os.remove(pathTraining_copy)
+        os.remove(pathTest_copy)
+        os.remove(pathIndex)
+
 
     def test_different_metrics(self):
         from sklearn.ensemble import RandomForestClassifier
@@ -167,14 +239,14 @@ class TestBasic(unittest.TestCase):
         s = Stacker(train_X=X, train_y=y, train_id=id, stratify=False, metric="auc")
         model = RandomForestClassifier(n_estimators=100, random_state=655321)
         y_hat_training = s.generate_training_metapredictor(model=model)
-        self.assertAlmostEqual(roc_auc_score(y, y_hat_training), s.cv_score_mean, places=2)
+        self.assertAlmostEqual(roc_auc_score(y, y_hat_training), s.cv_score_mean, delta=0.05)
         self.assertAlmostEqual(s.cv_score_mean, 0.9, delta=0.05, msg="Score value given by the model ('%s' ± '%s') "
                                                                      "is weird." % (s.cv_score_mean, s.cv_score_std))
 
         s = Stacker(train_X=X, train_y=y, train_id=id, stratify=False, metric="logloss")
         model = RandomForestClassifier(n_estimators=100, random_state=655321)
         y_hat_training = s.generate_training_metapredictor(model=model)
-        self.assertAlmostEqual(log_loss(y, np.array(y_hat_training)), s.cv_score_mean, places=2)
+        self.assertAlmostEqual(log_loss(y, np.array(y_hat_training)), s.cv_score_mean, delta=0.05)
         self.assertAlmostEqual(s.cv_score_mean, 0.41, delta=0.05, msg="Score value given by the model ('%s' ± '%s') "
                                                                       "is weird." % (s.cv_score_mean, s.cv_score_std))
 
