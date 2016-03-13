@@ -69,7 +69,7 @@ class CrossPartitioner():
             for name, data in kwargs.items():
                 if type(data) == list:
                     data = np.array(data)  # Converts lists to Numpy Array
-                elif type(data) == pd.core.frame.DataFrame:
+                elif type(data) == pd.core.frame.DataFrame or type(data) == pd.core.series.Series:
                     data = np.array(data)
 
 

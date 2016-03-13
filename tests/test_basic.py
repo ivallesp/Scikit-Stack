@@ -356,3 +356,20 @@ class TestBasic(unittest.TestCase):
             self.assertTrue(train.shape[1] == test.shape[1] == 3, "Different data columns returned!!")
             self.assertEqual(train.shape[0] + test.shape[0], 100, "Different number of total rows returned!!")
             self.assertTrue(train.shape[0] > test.shape[0], "Test size greater than train size!!")
+
+    def test_pandas_series_datatype(self):
+        import pandas as pd
+        data = pd.Series(range(100))
+        # TEST K-FOLD
+        cp = CrossPartitioner(k=10, n=100, stratify=False, shuffle=True, random_state=655321)
+        gen = cp.make_partitions(kw=data, append_indices=False)
+        for i, (train, test) in enumerate(gen):
+            self.assertEqual(len(train) + len(test), 100, "Different number of elements returned!!")
+            self.assertTrue(len(train) > len(test), "Test size greater than train size!!")
+        # TEST STRATIFIED K-FOLD
+        cp = CrossPartitioner(k=10, y=[0, 0, 0, 0, 0, 1, 1, 1, 1, 1] * 10, stratify=True, shuffle=True,
+                              random_state=655321)
+        gen = cp.make_partitions(kw=data, append_indices=False)
+        for i, (train, test) in enumerate(gen):
+            self.assertEqual(len(train) + len(test), 100, "Different number of elements returned!!")
+            self.assertTrue(len(train) > len(test), "Test size greater than train size!!")
