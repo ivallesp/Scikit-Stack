@@ -5,5 +5,7 @@
 *.pyc
 .DS_Store
 .idea
-*.csv
 *.jl
+build
+dist
+Stacker.egg-info
