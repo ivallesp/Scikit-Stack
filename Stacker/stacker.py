@@ -7,7 +7,7 @@ import time
 
 import numpy as np
 import pandas as pd
-from sklearn.metrics import *
+from sklearn.metrics import roc_auc_score, log_loss, mean_absolute_error
 
 from Stacker.common_objects import ParameterFail
 from Stacker.data_operations import CrossPartitioner
@@ -24,6 +24,7 @@ class Stacker():
         indices are properly aligned with the original data
         :param folds: Number of folds (int, default=10)
         :param stratify: Whether to preserve the percentage of samples of each class (boolean, default=False)
+        :param metric: 'auc', 'logloss', 'mae', None or a custom metric with the format func(y, prob)
         :return: None
         """
         self.train_X = train_X
@@ -50,12 +51,15 @@ class Stacker():
 
         if "predict_proba" in dir(self.model): self.model.predict = self.model.predict_proba
 
-        if self.metric.lower() == "auc":
+
+        if self.metric == "auc":
             eval_metric = roc_auc_score
-        elif self.metric.lower() == "logloss":
+        elif self.metric == "logloss":
             eval_metric = log_loss
+        elif self.metric == "mae":
+            eval_metric = mean_absolute_error
         else:
-            raise ParameterFail("Got a unrecognized metric name: %s" % self.metric)
+            eval_metric = self.metric  # Custom eval metric or None
 
         cp = CrossPartitioner(n=len(self.train_y) if not self.stratify else None,
                               y=self.train_y,
@@ -75,7 +79,7 @@ class Stacker():
             test_prediction_cv = np.reshape(test_prediction_cv, (len(test_y_cv), test_prediction_cv.ndim))  # this code
             # forces having 2D
             test_prediction_cv = test_prediction_cv[:, -1]  # Extract the last column
-            score = eval_metric(test_y_cv, test_prediction_cv)
+            score = eval_metric(test_y_cv, test_prediction_cv) if eval_metric else None
             scores.append(score)
             assert len(test_id_cv) == len(test_prediction_cv)
             prediction_batches.extend(test_prediction_cv)
@@ -83,8 +87,8 @@ class Stacker():
             assert len(prediction_batches) == len(indices_batches)
         t2 = time.time()
         self.cv_time = t2 - t1
-        self.cv_score_mean = np.mean(scores)
-        self.cv_score_std = np.std(scores)
+        self.cv_score_mean = np.mean(scores) if eval_metric else None
+        self.cv_score_std = np.std(scores) if eval_metric else None
         training_predictor = pd.DataFrame({"target": prediction_batches}, index=indices_batches).ix[self.train_id]
         assert len(training_predictor) == len(self.train_X)
         self.training_predictor = training_predictor
