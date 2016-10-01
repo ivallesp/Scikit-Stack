@@ -133,14 +133,14 @@ class TestBasic(unittest.TestCase):
         y_hat_training = s.generate_training_metapredictor(model=model)
         y_hat_test = s.generate_test_metapredictor(test_X, test_id)
 
-        pathTraining = "../demo/demo_predictor_training_metapredictor.csv"
-        pathTest = "../demo/demo_predictor_test_metapredictor.csv"
-        pathIndex = "../demo/index.jl"
+        pathTraining = os.path.join("demo","demo_predictor_training_metapredictor.csv")
+        pathTest = os.path.join("demo", "demo_predictor_test_metapredictor.csv")
+        pathIndex = os.path.join("demo", "index.jl")
         if os.path.exists(pathTraining): os.remove(pathTraining)
         if os.path.exists(pathTest): os.remove(pathTest)
         if os.path.exists(pathIndex): os.remove(pathIndex)
 
-        s.save_files(alias="demo_predictor", folder="../demo", metadata={"name": "NeuralNetwork (Tensorflow)",
+        s.save_files(alias="demo_predictor", folder=os.path.join(".", "demo"), metadata={"name": "NeuralNetwork (Tensorflow)",
                                                                          "description": "7 hidden layers, ReLU",
                                                                          "additional": "foo"})
 
@@ -196,8 +196,8 @@ class TestBasic(unittest.TestCase):
         self.assertEqual(type(index_for_test["total_time"]), float)
         self.assertIn(type(index_for_test["additional"]), [str, unicode])
 
-        pathTraining_copy = "../demo/demo_predictor_training_metapredictor_copy1.csv"
-        pathTest_copy = "../demo/demo_predictor_test_metapredictor_copy1.csv"
+        pathTraining_copy = os.path.join("demo", "demo_predictor_training_metapredictor_copy1.csv")
+        pathTest_copy = os.path.join("demo", "demo_predictor_test_metapredictor_copy1.csv")
 
         if os.path.exists(pathTraining_copy): os.remove(pathTraining_copy)
         if os.path.exists(pathTest_copy): os.remove(pathTest_copy)
@@ -205,7 +205,7 @@ class TestBasic(unittest.TestCase):
         self.assertFalse(os.path.exists(pathTraining_copy))
         self.assertFalse(os.path.exists(pathTest_copy))
 
-        s.save_files(alias="demo_predictor", folder="../demo", metadata={"name": "NeuralNetwork (Tensorflow)",
+        s.save_files(alias="demo_predictor", folder="demo", metadata={"name": "NeuralNetwork (Tensorflow)",
                                                                          "description": "7 hidden layers, ReLU",
                                                                          "additional": "foo"})
         self.assertTrue(os.path.exists(pathTraining_copy))
