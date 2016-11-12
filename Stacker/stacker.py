@@ -14,7 +14,7 @@ from Stacker.data_operations import CrossPartitioner
 from Stacker.file_tools import make_sure_do_not_replace
 
 class Stacker():
-    def __init__(self, train_X, train_y, train_id, folds=10, stratify=True, metric="auc"):
+    def __init__(self, train_X, train_y, train_id, folds=10, stratify=True, cv_grouping=None, metric="auc"):
         """
         This class is the main class of the Stacker. Its main purpose is to properly generate the stacked prediction
         assuring that the indices of the predictions are aligned.
@@ -24,6 +24,7 @@ class Stacker():
         indices are properly aligned with the original data
         :param folds: Number of folds (int, default=10)
         :param stratify: Whether to preserve the percentage of samples of each class (boolean, default=False)
+        :param cv_grouping: Whether to use an alternative index for stratifying the folds (list or None, default=None)
         :param metric: 'auc', 'logloss', 'mae', None or a custom metric with the format func(y, prob)
         :return: None
         """
@@ -31,7 +32,8 @@ class Stacker():
         self.train_y = train_y
         self.train_id = train_id
         self.folds = folds
-        self.stratify = stratify
+        self.cv_grouping = self.train_y if not cv_grouping else cv_grouping
+        self.stratify = stratify if not self.cv_grouping else True
         self.metric = metric
 
     def generate_training_metapredictor(self, model):
@@ -62,7 +64,7 @@ class Stacker():
             eval_metric = self.metric  # Custom eval metric or None
 
         cp = CrossPartitioner(n=len(self.train_y) if not self.stratify else None,
-                              y=self.train_y,
+                              y=self.cv_grouping,
                               k=self.folds,
                               stratify=self.stratify,
                               shuffle=True,
