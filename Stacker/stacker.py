@@ -32,8 +32,9 @@ class Stacker():
         self.train_y = train_y
         self.train_id = train_id
         self.folds = folds
+        if "tolist" in dir(cv_grouping): cv_grouping = cv_grouping.tolist()
+        self.stratify = stratify if not cv_grouping else True
         self.cv_grouping = self.train_y if not cv_grouping else cv_grouping
-        self.stratify = stratify if not self.cv_grouping else True
         self.metric = metric
 
     def generate_training_metapredictor(self, model):
