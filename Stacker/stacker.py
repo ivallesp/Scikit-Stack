@@ -36,6 +36,7 @@ class Stacker():
         self.stratify = stratify if not cv_grouping else True
         self.cv_grouping = self.train_y if not cv_grouping else cv_grouping
         self.metric = metric
+        self.is_whole_model_trained = None
 
     def generate_training_metapredictor(self, model):
         """
@@ -51,9 +52,9 @@ class Stacker():
         self.test_predictor = None
         self.model = None
         self.model = model
+        self.is_whole_model_trained = False
 
         if "predict_proba" in dir(self.model): self.model.predict = self.model.predict_proba
-
 
         if self.metric == "auc":
             eval_metric = roc_auc_score
@@ -98,9 +99,20 @@ class Stacker():
         return training_predictor
 
     def generate_test_metapredictor(self, test_X, test_id):
+        """
+        This function is responsible for generating the test metapredictor. For this, it trains the model stored in the
+        "generate_train_metapredictor" method with all the training data (also specified in the previous method).
+        :param test_X: Test set (numpy.ndarray, scipy.sparse.csr, pandas.Dataframe)
+        :param test_id: id for the test data (list, numpy.ndarray, pandas.Dataframe). Used for assuring that the
+        indices are properly aligned with the original data
+        :return: pd.DataFrame with only one column containing the target. The ID of this DataFrame has to be aligned
+        (i.e. to be the same) as the original test set index (pandas.Dataframe)
+        """
         self.test_predictor = None
         t1 = time.time()
-        self.model.fit(self.train_X, self.train_y)
+        if not self.is_whole_model_trained:
+            self.model.fit(self.train_X, self.train_y)
+            self.is_whole_model_trained = True
         test_prediction = self.model.predict(test_X)
         t2 = time.time()
         self.whole_training_time = t2 - t1
