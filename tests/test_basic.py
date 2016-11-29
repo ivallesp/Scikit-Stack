@@ -250,6 +250,13 @@ class TestBasic(unittest.TestCase):
         self.assertAlmostEqual(s.cv_score_mean, 0.41, delta=0.05, msg="Score value given by the model ('%s' ± '%s') "
                                                                       "is weird." % (s.cv_score_mean, s.cv_score_std))
 
+        s = Stacker(train_X=X, train_y=y, train_id=id, stratify=False, metric="mae")
+        model = RandomForestClassifier(n_estimators=100, random_state=655321)
+        y_hat_training = s.generate_training_metapredictor(model=model)
+        self.assertAlmostEqual(mean_absolute_error(y, np.array(y_hat_training)), s.cv_score_mean, delta=0.05)
+        self.assertAlmostEqual(s.cv_score_mean, 0.82217, delta=0.05, msg="Score value given by the model ('%s' ± '%s') "
+                                                                      "is weird." % (s.cv_score_mean, s.cv_score_std))
+
         s = Stacker(train_X=X, train_y=y, train_id=id, stratify=False, metric=None)
         model = RandomForestClassifier(n_estimators=100, random_state=655321)
         y_hat_training = s.generate_training_metapredictor(model=model)
