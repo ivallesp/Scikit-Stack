@@ -80,10 +80,12 @@ class Stacker():
         for i, ((train_X_cv, test_X_cv), (train_y_cv, test_y_cv), (train_id_cv, test_id_cv)) in enumerate(gen):
             self.model.fit(train_X_cv, train_y_cv)
             test_prediction_cv = self.model.predict(test_X_cv)  # Can give a 2D or a 1D Matrix
-            test_prediction_cv = np.reshape(test_prediction_cv, (len(test_y_cv), test_prediction_cv.ndim))  # this code
-            # forces having 2D
-            test_prediction_cv = test_prediction_cv[:, -1]  # Extract the last column
-            score = eval_metric(test_y_cv, test_prediction_cv) if eval_metric else None
+            # TODO: Add Tests if needed
+            if len(test_prediction_cv.shape) > 1:
+                if test_prediction_cv.shape[0] < test_prediction_cv.shape[1]: # Forces vertical table
+                    test_prediction_cv = test_prediction_cv.T
+                test_prediction_cv = test_prediction_cv[:, -1]  # Extract the last column
+            score = eval_metric(list(np.array(test_y_cv)), list(np.array(test_prediction_cv))) if eval_metric else None
             scores.append(score)
             assert len(test_id_cv) == len(test_prediction_cv)
             prediction_batches.extend(test_prediction_cv)
@@ -116,9 +118,12 @@ class Stacker():
         test_prediction = self.model.predict(test_X)
         t2 = time.time()
         self.whole_training_time = t2 - t1
-        test_prediction = np.reshape(test_prediction, (len(test_id), test_prediction.ndim))  # this code
+        if len(test_prediction.shape) > 1:
+            if test_prediction.shape[0] < test_prediction.shape[1]:  # Forces vertical table
+                test_prediction = test_prediction.T
+        #test_prediction = np.reshape(test_prediction, (len(test_id), test_prediction.ndim))  # this code
         # forces having 2D
-        test_prediction = test_prediction[:, -1]  # Extract the last column
+            test_prediction = test_prediction[:, -1]  # Extract the last column
         test_predictor = pd.DataFrame({"target": test_prediction}, index=test_id)
         self.test_predictor = test_predictor
         return test_predictor

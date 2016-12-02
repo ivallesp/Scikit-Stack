@@ -19,7 +19,10 @@ class CrossPartitioner():
         default numpy RNG for shuffling (None, int or RandomState, default=655321)
         :return: None
         """
-        self.y = y
+        if type(y) in (np.matrix, np.array):
+            self.y = np.array(y)[:, 0] # TODO Add tests
+        else:
+            self.y = y
         self.k = k
         self.stratify = stratify
         self.shuffle = shuffle
