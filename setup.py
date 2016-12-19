@@ -6,10 +6,9 @@ from setuptools import setup
 setup(name='Stacker',
       version='2.0',
       description='Stacker for combining pattern classifiers',
-      url='http://github.com/ivallesp',
-      author='Iván Vallés Pérez',
+      url='http://github.com/ivallesp/stacker',
+      author='Ivan Valles Perez',
       author_email='ivanvallesperez@gmail.com',
-      license='',
       install_requires=[
           "pandas>=0.17.1",
           "numpy>=1.10.4",
