@@ -3,9 +3,9 @@ __author__ = 'ivanvallesperez'
 
 from setuptools import setup
 
-setup(name='Stacker',
+setup(name='scikit-stack',
       version='2.0',
-      description='Stacker for combining pattern classifiers',
+      description='skstack for combining pattern classifiers',
       url='http://github.com/ivallesp/stacker',
       author='Ivan Valles Perez',
       author_email='ivanvallesperez@gmail.com',
@@ -20,5 +20,6 @@ setup(name='Stacker',
           "scikit-learn>=0.17.1",
           "xgboost==0.4"
       ],
-      packages=['Stacker'],
+      download_url="https://github.com/ivallesp/stacker/tarball/V2pypi",
+      packages=['skstack'],
       zip_safe=False)

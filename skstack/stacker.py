@@ -9,14 +9,14 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import roc_auc_score, log_loss, mean_absolute_error
 
-from Stacker.common_objects import ParameterFail
-from Stacker.data_operations import CrossPartitioner
-from Stacker.file_tools import make_sure_do_not_replace
+from skstack.common_objects import ParameterFail
+from skstack.data_operations import CrossPartitioner
+from skstack.file_tools import make_sure_do_not_replace
 
 class Stacker():
     def __init__(self, train_X, train_y, train_id, folds=10, stratify=True, cv_grouping=None, metric="auc"):
         """
-        This class is the main class of the Stacker. Its main purpose is to properly generate the stacked prediction
+        This class is the main class of the skstack. Its main purpose is to properly generate the stacked prediction
         assuring that the indices of the predictions are aligned.
         :param train_X: the input data for training (numpy.ndarray, scipy.sparse.csr, pandas.Dataframe)
         :param train_y: target for the training data (list, numpy.ndarray, pandas.Dataframe)

@@ -6,7 +6,7 @@ import unittest
 import scipy as sp
 from sklearn.datasets import *
 
-from Stacker.stacker import *
+from skstack.stacker import *
 from demo.data import DIC_FOLD_PARTITIONS, DIC_SFOLD_PARTITIONS
 
 
@@ -30,15 +30,15 @@ class TestBasic(unittest.TestCase):
 
         s = Stacker(train_X=X, train_y=y, train_id=id, stratify=False, metric="auc")
         y_hat_training = s.generate_training_metapredictor(model=model)
-        self.assertIn("cv_score_mean", dir(s), "Atribute 'cv_score_mean' not found in the Stacker object")
-        self.assertIn("cv_score_std", dir(s), "Atribute 'cv_score_std' not found in the Stacker object")
+        self.assertIn("cv_score_mean", dir(s), "Atribute 'cv_score_mean' not found in the skstack object")
+        self.assertIn("cv_score_std", dir(s), "Atribute 'cv_score_std' not found in the skstack object")
         self.assertAlmostEqual(s.cv_score_mean, 0.9, delta=0.05, msg="Score value given by the model ('%s' ± '%s') "
                                                                      "is weird." % (s.cv_score_mean, s.cv_score_std))
         self.assertAlmostEqual(roc_auc_score(y, y_hat_training), s.cv_score_mean, delta=0.05)
         # Differences produced basically because the size of the sample when calculating the AUC gives the resolution of
         # the curve. As the resolution changes, the result also slightly changes. We are calculating the roc with
         # different sample sizes.
-        self.assertIn("training_predictor", dir(s), "Atribute 'training_predictor' not found in the Stacker object")
+        self.assertIn("training_predictor", dir(s), "Atribute 'training_predictor' not found in the skstack object")
         self.assertTrue(type(s.training_predictor) != None)
 
         y_hat_test = s.generate_test_metapredictor(test_X, test_id)
@@ -46,7 +46,7 @@ class TestBasic(unittest.TestCase):
         # Test score greater than test_cv score because first of all I am not making any fit, so the cv out of sample
         # set is completely out of sample, and for the test set I am using all the training data, what produces a
         # harder training
-        self.assertIn("test_predictor", dir(s), "Atribute 'test_predictor' not found in the Stacker object")
+        self.assertIn("test_predictor", dir(s), "Atribute 'test_predictor' not found in the skstack object")
         self.assertTrue(type(s.test_predictor) != None)
 
     def test_consistencies(self):

@@ -8,7 +8,7 @@ from sklearn.cross_validation import StratifiedKFold, KFold
 class CrossPartitioner():
     def __init__(self, n=None, y=None, k=10, stratify=False, shuffle=True, random_state=655321):
         """
-        Function for creating the partitions for the Stacker by using CrossValidation.
+        Function for creating the partitions for the skstack by using CrossValidation.
         :param n: When stratify=False, n defines the length of the datasets (int of None, default None)
         :param y: When stratify=True, train_y is the class used to preserve the percentages (array-like or None,
         default=None)

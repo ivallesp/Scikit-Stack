@@ -2,7 +2,7 @@
 __author__ = 'ivanvallesperez'
 import unittest
 
-from Stacker.file_tools import *
+from skstack.file_tools import *
 
 
 class TestFileTools(unittest.TestCase):
