@@ -10,7 +10,7 @@ Check my profile here! https://www.kaggle.com/ivallesp
 
 If you want to learn more about this ensembling algorithm, check out [this fantastic paper](https://biostats.bepress.com/ucbbiostat/paper222/)
 
-!(performance)[img/performance.png]
+![performance](img/performance.png)
 
 ## Getting started
 You can install the library by running `pip install scikit-stack`.
@@ -21,3 +21,4 @@ The libraries required are `pandas`, `numpy` and `scikit-learn`. Please, check o
 The library is totally open for contribution. If you want to fix a bug, extend the library or make any other contribution, please, send a pull request. It will be reviewed as soon as possible.
 
 ## License
+Copyright (c) 2017 Iván Vallés Pérez. Licensed under MIT rights, please, review the `LICENSE` file.
