@@ -1,4 +1,4 @@
-# Stacked Generalization implementation in Python
+# Stacked Generalization library for Python
 
 This repository contains the implementation of the Stacked Generalization (aka SuperLearner) which lead me to almost win 3 Kaggle Competitions.
 
